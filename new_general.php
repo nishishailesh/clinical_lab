@@ -14,10 +14,13 @@ echo '<pre>';print_r($_POST);echo '</pre>';
 
 function get_basic_data()
 {
-	echo '<form method=post class="bg-light jumbotron basic_form">';
+	echo '<form method=post class="bg-light jumbotron">';
 	echo '<input type=hidden name=session_name value=\''.session_name().'\'>';
 	
 	$YY=strftime("%y");
+
+echo '<div class="basic_form">';
+
 	echo '	<label class="my_label text-danger" for="mrd">MRD</label>
 			<input size=13 id=mrd name=mrd class="form-control text-danger" required="required" type=text pattern="SUR/[0-9][0-9]/[0-9]{8}" placeholder="MRD" value="SUR/'.$YY.'/"\>
 			<p class="help"><span class=text-danger>Must have</span> 8 digit after SUR/YY/</p>';
@@ -29,7 +32,12 @@ function get_basic_data()
 	echo '	<label  class="my_label" for="group_id">Group ID</label>
 			<input class="form-control" type=text id=group_id name=group_id placeholder=group_id>
 			<p class="help">Give ID to a group of samples</p>';
+			
+echo '</div>';
 
+echo '<button class="btn btn-primary m-0 p-0" type=button data-toggle="collapse" data-target="#more">More...</button>';
+echo '<div id=more class="collapse">';
+echo '<div class="basic_form">';
 	echo '	<label  class="my_label"  for="department">Department:</label>';
 			mk_select_from_array('department',$GLOBALS['department']);
 			echo '<p class="help">Select Department</p>';
@@ -74,15 +82,24 @@ function get_basic_data()
 			<input class="form-control" type=text id=extra name=extra placeholder=Extra>
 			<p class="help">Any other extra details</p>';
 
+echo '</div>';
+echo '</div>';
+
+	get_examination_data();
+
+echo '<div class="basic_form">';
 	echo '	<p   class="my_label"  >Next Step:</p>
-			<button type=submit class="btn btn-primary form-control" name=action value=select_examination>Select Examinations</button>
-			<p  class="help">Next step is to select examinations</p>';	
+			<button type=submit class="btn btn-primary form-control" name=action value=select_examination>Save</button>
+			<p  class="help">Unique Sample Id will be provided when data is saved</p>';	
+echo '</div>';
+
+
 	echo '</form>';			
 }
 
 function get_examination_data()
 {
-	
+
 	
 }
 function insert_or_update_result($sample_id,$examination_id,$result,$uniq)
@@ -97,7 +114,7 @@ function insert_or_update_result($sample_id,$examination_id,$result,$uniq)
 
 function transmit_post_to_next($var)
 {
-	if(strlen($_POST[$var]>0)
+	if(strlen($_POST[$var]>0))
 	{
 		echo '<input type=hidden name="'.$var.'" value="'.$_POST[$var].'">';
 	}
@@ -124,17 +141,11 @@ function repost_basic_data()
 <style>
 
 @media only screen and (max-width: 400px) 
-{
-	  body {
-		background-color: #F09A9D; /* Red */
-	  }
-  
+{ 
 	  .basic_form 
 	{
 	  display: grid;
 	  grid-template-columns: auto;
-	  background-color: #2196F3;
-	  padding: 10px;
 	}
 	
 	.my_label
@@ -161,8 +172,6 @@ function repost_basic_data()
 	{
 	  display: grid;
 	  grid-template-columns: 33% 67%;
-	  background-color: #2196F3;
-	  padding: 10px;
 	}
 
 	 .help
@@ -172,17 +181,12 @@ function repost_basic_data()
 	   
 }
 
-/* Desktop Styles */
-@media only screen and (min-width: 961px) {
-	  body {
-		background-color: #B2D6FF; /* Blue */
-	  }
+@media only screen and (min-width: 961px) 
+{
 	.basic_form 
 	{
 	  display: grid;
 	  grid-template-columns: 20% 30% 50%;
-	  background-color: #2196F3;
-	  padding: 10px;
 	}	  
 }
 </style>
