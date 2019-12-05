@@ -1,5 +1,4 @@
 <?php
-
 $GLOBALS['main_user_location']='/var/gmcs_config/db_config.php';
 $GLOBALS['user_database']='clinical_lab';
 $GLOBALS['user_table']='user';
@@ -8,6 +7,8 @@ $GLOBALS['user_pass']='password';
 $GLOBALS['expiry_period']='+ 6 months';
 $GLOBALS['expirydate_field']='expirydate';
 $GLOBALS['application_name']='Clinical Laboratory';
+
+$GLOBALS['database']='clinical_lab';
 
 $GLOBALS['department']=array
 (
