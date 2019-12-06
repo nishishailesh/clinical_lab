@@ -6,11 +6,18 @@ require_once 'base/verify_login.php';
 $link=get_link($GLOBALS['main_user'],$GLOBALS['main_pass']);
 
 		main_menu();
-		get_data($link);
+if($_POST['action']=='new_general')
+{
+	get_data($link);
+}
+elseif($_POST['action']=='insert')
+{
+	save_insert($link);
+}
 	//////////////user code ends////////////////
 tail();
 
-//echo '<pre>';print_r($_POST);echo '</pre>';
+echo '<pre>';print_r($_POST);echo '</pre>';
 
 //////////////Functions///////////////////////
 
@@ -30,7 +37,7 @@ echo '<div class="basic_form">';
 
 	echo '	<label  class="my_label" for="group_id">Group ID</label>
 			<input class="form-control" type=text id=group_id name=group_id placeholder=group_id>
-			<p class="help">Give ID to a group of samples</p>';
+			<p class="help">Give ID to a group of samples from single patient</p>';
 echo '</div>';
 echo '</div>';	
 	
@@ -40,7 +47,7 @@ echo '</div>';
 function get_more_basic()
 {
 
-echo '<div id=more_basic class="tab-pane">'; //donot mix basic_form(grid) with bootsrap class
+echo '<div id=more_basic class="tab-pane ">'; //donot mix basic_form(grid) with bootsrap class
 echo '<div class="basic_form">';
 	echo '	<label  class="my_label"  for="department">Department:</label>';
 			mk_select_from_array('department',$GLOBALS['department']);
@@ -101,6 +108,7 @@ function get_data($link)
 			<li><button class="btn btn-secondary" type=button  data-toggle="tab" href="#more_basic">More</button></li>
 			<li><button class="btn btn-secondary" type=button  data-toggle="tab" href="#examination">Examinations</button></li>
 			<li><button class="btn btn-secondary" type=button  data-toggle="tab" href="#profile">Profiles</button></li>
+			<li><button type=submit class="btn btn-primary form-control" name=action value=insert>Save</button></li>
 		</ul>';
 	echo '<div class="tab-content">';
 		get_basic();
@@ -109,11 +117,11 @@ function get_data($link)
 		get_profile_data($link);
 	echo '</div>';
 	
-	echo '<div class="basic_form">';
-		echo '	<p   class="my_label"  >Next Step:</p>
-			<button type=submit class="btn btn-primary form-control" name=action value=insert>Save</button>
-			<p  class="help">Unique Sample Id will be provided when data is saved</p>';	
-	echo '</div>';
+	//echo '<div class="basic_form">';
+	//	echo '	<p   class="my_label"  >Next Step:</p>
+	//		<button type=submit class="btn btn-primary form-control" name=action value=insert>Save</button>
+	//		<p  class="help">MRD, Name must. On Saving Sample Id will be provided</p>';	
+	//echo '</div>';
 
 	echo '</form>';			
 }
@@ -122,11 +130,11 @@ function get_examination_data($link)
 {
 	$sql='select * from examination';
 	$result=run_query($link,$GLOBALS['database'],$sql);
-	echo '<div id=examination class="tab-pane">';
+	echo '<div id=examination class="tab-pane ">';
 	echo '<div class="ex_profile">';
 	while($ar=get_single_row($result))
 	{
-		my_on_off_ex($ar['name'],$ar['examination_id']);
+		my_on_off_ex($ar['name'],$ar['sample_requirement'],$ar['examination_id']);
 	}
 	echo '<input type=hidden name=list_of_selected_examination id=list_of_selected_examination>';
 	echo '</div>';
@@ -137,23 +145,23 @@ function get_profile_data($link)
 {
 	$sql='select * from profile';
 	$result=run_query($link,$GLOBALS['database'],$sql);
-	echo '<div id=profile  class="tab-pane">';
+	echo '<div id=profile  class="tab-pane ">';
 	while($ar=get_single_row($result))
 	{
 		my_on_off_profile($ar['name'],$ar['profile_id']);
 	}
-	echo '<input type=text name=list_of_selected_profile id=list_of_selected_profile>';
+	echo '<input type=hidden name=list_of_selected_profile id=list_of_selected_profile>';
 	echo '</div>';
 }
 
-function my_on_off_ex($label,$id)
+function my_on_off_ex($label,$sr,$id)
 {
 	
 	echo '<button 
 			class="btn btn-sm btn-outline-primary"
 			type=button 
 			onclick="select_examination_js(this, \''.$id.'\',\'list_of_selected_examination\')"
-			>'.$label.'</button>';
+			>'.$label.'<br>('.$sr.')</button>';
 }
 
 
@@ -176,6 +184,86 @@ function insert_or_update_result($sample_id,$examination_id,$result,$uniq)
 		{echo 'Data not inserted/updated<br>'; return false;}
 	else{return true;}
 }
+
+function save_insert($link)
+{
+	//find list of examinations requested
+	//determine sample-type required
+	//find sample_id to be given
+	//insert all examinations in result table
+	
+	//find list of examinations requested
+	$requested=array();
+	$ex_requested=explode(',',$_POST['list_of_selected_examination']);
+	$requested=array_merge($requested,$ex_requested);
+	$profile_requested=explode(',',$_POST['list_of_selected_profile']);
+	foreach($profile_requested as $value)
+	{
+		$psql='select * from profile where profile_id=\''.$value.'\'';
+		$result=run_query($link,$GLOBALS['database'],$psql);
+		$ar=get_single_row($result);
+		$profile_ex_requested=explode(',',$ar['examination_id_list']);
+		$requested=array_merge($requested,$profile_ex_requested);
+	}
+
+	$requested=array_unique($requested);
+	print_r($requested);
+	
+	//determine sample-type required
+	$sample_required=array();
+	foreach($requested as $ex)
+	{
+		$psql='select sample_requirement from examination where examination_id=\''.$ex.'\'';
+		$result=run_query($link,$GLOBALS['database'],$psql);
+		$ar=get_single_row($result);
+		$sample_required[]=$ar['sample_requirement'];
+	}
+	
+	$sample_required=array_unique($sample_required);
+	print_r($sample_required);
+}
+
+/*Array
+(
+    [session_name] => sn_1611426731
+    [mrd] => SUR/19/12345678
+    [name] => shailesh
+    [group_id] => 1212
+    [department] => 
+    [unit] => 
+    [ow_no] => 
+    [unique_id] => 
+    [mobile] => 
+    [sex] => 
+    [dob] => 
+    [age] => 
+    [extra] => 
+    [list_of_selected_examination] => 
+    [list_of_selected_profile] => 3
+    [action] => insert
+)
+
+give sample_id as autonumber
+sample_id have its attached parameters
+	*date
+	*time
+	*patient department unit location
+	*serial number catagory
+	*serial number
+	 
+YYMMXXSSNNNNN
+2012
+
+XX=01 if OPD
+XX=02 if Ward
+
+SS=01 if Bio
+SS=02 if HI
+SS=03 if CP
+SS=04 if MI
+
+*/
+
 
 ?>
 <style>
