@@ -3,8 +3,9 @@
 require_once 'project_common.php';
 require_once 'base/verify_login.php';
 	////////User code below/////////////////////
+$link=get_link($GLOBALS['main_user'],$GLOBALS['main_pass']);
 		main_menu();
-		get_basic_data();
+		get_basic_data($link);
 	//////////////user code ends////////////////
 tail();
 
@@ -12,7 +13,7 @@ echo '<pre>';print_r($_POST);echo '</pre>';
 
 //////////////Functions///////////////////////
 
-function get_basic_data()
+function get_basic_data($link)
 {
 	echo '<form method=post class="bg-light jumbotron">';
 	echo '<input type=hidden name=session_name value=\''.session_name().'\'>';
@@ -85,7 +86,7 @@ echo '<div class="basic_form">';
 echo '</div>';
 echo '</div>';
 
-	get_examination_data();
+	get_examination_data($link);
 
 echo '<div class="basic_form">';
 	echo '	<p   class="my_label"  >Next Step:</p>
@@ -97,11 +98,17 @@ echo '</div>';
 	echo '</form>';			
 }
 
-function get_examination_data()
+function get_examination_data($link)
 {
-
+	$sql='select * from examination';
+	$result=run_query($link,$GLOBALS['database'],$sql);
+	while($ar=get_single_row($result))
+	{
+		print_r($ar);
+	}
 	
 }
+
 function insert_or_update_result($sample_id,$examination_id,$result,$uniq)
 {
 	$sql='insert into result (sample_id,examination_id,result,uniq)
