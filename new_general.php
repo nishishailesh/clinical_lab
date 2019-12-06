@@ -4,24 +4,22 @@ require_once 'project_common.php';
 require_once 'base/verify_login.php';
 	////////User code below/////////////////////
 $link=get_link($GLOBALS['main_user'],$GLOBALS['main_pass']);
+
 		main_menu();
-		get_basic_data($link);
+		get_data($link);
 	//////////////user code ends////////////////
 tail();
 
-echo '<pre>';print_r($_POST);echo '</pre>';
+//echo '<pre>';print_r($_POST);echo '</pre>';
 
 //////////////Functions///////////////////////
 
-function get_basic_data($link)
+function get_basic()
 {
-	echo '<form method=post class="bg-light jumbotron">';
-	echo '<input type=hidden name=session_name value=\''.session_name().'\'>';
-	
 	$YY=strftime("%y");
 
+echo '<div id=basic class="tab-pane active">';
 echo '<div class="basic_form">';
-
 	echo '	<label class="my_label text-danger" for="mrd">MRD</label>
 			<input size=13 id=mrd name=mrd class="form-control text-danger" required="required" type=text pattern="SUR/[0-9][0-9]/[0-9]{8}" placeholder="MRD" value="SUR/'.$YY.'/"\>
 			<p class="help"><span class=text-danger>Must have</span> 8 digit after SUR/YY/</p>';
@@ -33,11 +31,16 @@ echo '<div class="basic_form">';
 	echo '	<label  class="my_label" for="group_id">Group ID</label>
 			<input class="form-control" type=text id=group_id name=group_id placeholder=group_id>
 			<p class="help">Give ID to a group of samples</p>';
-			
 echo '</div>';
+echo '</div>';	
+	
+	
+}
 
-echo '<button class="btn btn-primary m-0 p-0" type=button data-toggle="collapse" data-target="#more">More...</button>';
-echo '<div id=more class="collapse">';
+function get_more_basic()
+{
+
+echo '<div id=more_basic class="tab-pane">'; //donot mix basic_form(grid) with bootsrap class
 echo '<div class="basic_form">';
 	echo '	<label  class="my_label"  for="department">Department:</label>';
 			mk_select_from_array('department',$GLOBALS['department']);
@@ -82,18 +85,35 @@ echo '<div class="basic_form">';
 	echo '	<label  class="my_label"  for="extra">Extra:</label>
 			<input class="form-control" type=text id=extra name=extra placeholder=Extra>
 			<p class="help">Any other extra details</p>';
-
 echo '</div>';
 echo '</div>';
 
-	get_examination_data($link);
+}
 
-echo '<div class="basic_form">';
-	echo '	<p   class="my_label"  >Next Step:</p>
-			<button type=submit class="btn btn-primary form-control" name=action value=select_examination>Save</button>
+
+function get_data($link)
+{
+	echo '<form method=post class="bg-light jumbotron">';
+	echo '<input type=hidden name=session_name value=\''.session_name().'\'>';
+
+	echo '<ul class="nav nav-pills nav-justified">
+			<li class="active" ><button class="btn btn-secondary" type=button data-toggle="tab" href="#basic">Basic</button></li>
+			<li><button class="btn btn-secondary" type=button  data-toggle="tab" href="#more_basic">More</button></li>
+			<li><button class="btn btn-secondary" type=button  data-toggle="tab" href="#examination">Examinations</button></li>
+			<li><button class="btn btn-secondary" type=button  data-toggle="tab" href="#profile">Profiles</button></li>
+		</ul>';
+	echo '<div class="tab-content">';
+		get_basic();
+		get_more_basic();
+		get_examination_data($link);
+		get_profile_data($link);
+	echo '</div>';
+	
+	echo '<div class="basic_form">';
+		echo '	<p   class="my_label"  >Next Step:</p>
+			<button type=submit class="btn btn-primary form-control" name=action value=insert>Save</button>
 			<p  class="help">Unique Sample Id will be provided when data is saved</p>';	
-echo '</div>';
-
+	echo '</div>';
 
 	echo '</form>';			
 }
@@ -102,11 +122,49 @@ function get_examination_data($link)
 {
 	$sql='select * from examination';
 	$result=run_query($link,$GLOBALS['database'],$sql);
+	echo '<div id=examination class="tab-pane">';
+	echo '<div class="ex_profile">';
 	while($ar=get_single_row($result))
 	{
-		print_r($ar);
+		my_on_off_ex($ar['name'],$ar['examination_id']);
 	}
+	echo '<input type=hidden name=list_of_selected_examination id=list_of_selected_examination>';
+	echo '</div>';
+	echo '</div>';
+}
+
+function get_profile_data($link)
+{
+	$sql='select * from profile';
+	$result=run_query($link,$GLOBALS['database'],$sql);
+	echo '<div id=profile  class="tab-pane">';
+	while($ar=get_single_row($result))
+	{
+		my_on_off_profile($ar['name'],$ar['profile_id']);
+	}
+	echo '<input type=text name=list_of_selected_profile id=list_of_selected_profile>';
+	echo '</div>';
+}
+
+function my_on_off_ex($label,$id)
+{
 	
+	echo '<button 
+			class="btn btn-sm btn-outline-primary"
+			type=button 
+			onclick="select_examination_js(this, \''.$id.'\',\'list_of_selected_examination\')"
+			>'.$label.'</button>';
+}
+
+
+function my_on_off_profile($label,$id)
+{
+	
+	echo '<button 
+			class="btn btn-sm btn-outline-primary"
+			type=button 
+			onclick="select_profile_js(this, \''.$id.'\',\'list_of_selected_profile\')"
+			>'.$label.'</button>';
 }
 
 function insert_or_update_result($sample_id,$examination_id,$result,$uniq)
@@ -117,31 +175,6 @@ function insert_or_update_result($sample_id,$examination_id,$result,$uniq)
 	if(!run_query($link,$GLOBALS['database'],$sql))
 		{echo 'Data not inserted/updated<br>'; return false;}
 	else{return true;}
-}
-
-function transmit_post_to_next($var)
-{
-	if(strlen($_POST[$var]>0))
-	{
-		echo '<input type=hidden name="'.$var.'" value="'.$_POST[$var].'">';
-	}
-}
-	
-function repost_basic_data()
-{
-	echo '<input type=text name=mrd readonly value="'.$_POST['mrd'].'">';
-	echo '<input type=text name=name readonly value="'.$_POST['name'].'">';
-	transmit_post_to_next('group_id');
-	transmit_post_to_next('department');
-	transmit_post_to_next('unit');
-	transmit_post_to_next('wardopd');
-	transmit_post_to_next('ow_no');
-	transmit_post_to_next('unique_id');
-	transmit_post_to_next('mobile');
-	transmit_post_to_next('sex');
-	transmit_post_to_next('dob');
-	transmit_post_to_next('age');
-	transmit_post_to_next('extra');
 }
 
 ?>
@@ -165,16 +198,17 @@ function repost_basic_data()
 		 display:none
 	 }
 	 
-	 
+	.ex_profile 
+	{
+	  display: grid;
+	  grid-template-columns: auto auto;
+	}		 
 }
 
 /* Tablet Styles */
 @media only screen and (min-width: 401px) and (max-width: 960px) 
 {
-	  body {
-		background-color: #F5CF8E; /* Yellow */
-	  }
-	  
+  
 	.basic_form 
 	{
 	  display: grid;
@@ -185,7 +219,12 @@ function repost_basic_data()
 	 {
 		 display:none
 	 }
-	   
+
+	.ex_profile 
+	{
+	  display: grid;
+	  grid-template-columns: auto auto auto auto;
+	}	   
 }
 
 @media only screen and (min-width: 961px) 
@@ -194,6 +233,50 @@ function repost_basic_data()
 	{
 	  display: grid;
 	  grid-template-columns: 20% 30% 50%;
+	}	
+	
+	.ex_profile 
+	{
+	  display: grid;
+	  grid-template-columns: auto auto auto auto auto auto auto auto;
 	}	  
 }
+
 </style>
+
+<script>
+var selected_ex=[]
+var selected_profile=[]
+
+function select_examination_js(me,ex_id,list_id)
+{
+	if(selected_ex.indexOf(ex_id) !== -1)
+	{
+		selected_ex.splice(selected_ex.indexOf(ex_id),1)
+		document.getElementById(list_id).value=selected_ex
+		me.classList.remove('bg-warning')
+	}
+	else
+	{
+		selected_ex.push(ex_id);
+		document.getElementById(list_id).value=selected_ex
+		me.classList.add('bg-warning')
+	}
+}
+
+function select_profile_js(me,ex_id,list_id)
+{
+	if(selected_profile.indexOf(ex_id) !== -1)
+	{
+		selected_profile.splice(selected_profile.indexOf(ex_id),1)
+		document.getElementById(list_id).value=selected_profile
+		me.classList.remove('bg-warning')
+	}
+	else
+	{
+		selected_profile.push(ex_id);
+		document.getElementById(list_id).value=selected_profile
+		me.classList.add('bg-warning')
+	}
+}						
+</script>
