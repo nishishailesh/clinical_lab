@@ -195,8 +195,13 @@ function save_insert($link)
 	//find list of examinations requested
 	$requested=array();
 	$ex_requested=explode(',',$_POST['list_of_selected_examination']);
+	echo '<h5>following individual tests are requested</h5>';
+	echo '<pre>';print_r($ex_requested);echo '</pre>';
 	$requested=array_merge($requested,$ex_requested);
+	echo '<h5>all request before profile</h5>';
+	echo '<pre>';print_r($requested);echo '</pre>';
 	$profile_requested=explode(',',$_POST['list_of_selected_profile']);
+	
 	foreach($profile_requested as $value)
 	{
 		$psql='select * from profile where profile_id=\''.$value.'\'';
@@ -207,7 +212,9 @@ function save_insert($link)
 	}
 
 	$requested=array_unique($requested);
-	print_r($requested);
+	
+	echo '<h5>following tests are requested</h5>';
+	echo '<pre>';print_r($requested);echo '</pre>';
 	
 	//determine sample-type required
 	$sample_required=array();
@@ -220,7 +227,10 @@ function save_insert($link)
 	}
 	
 	$sample_required=array_unique($sample_required);
-	print_r($sample_required);
+	
+	echo '<h5>following samples needs to be collected</h5>';
+	echo '<pre>';print_r($sample_required);echo '</pre>';
+
 }
 
 /*Array
@@ -261,6 +271,13 @@ SS=01 if Bio
 SS=02 if HI
 SS=03 if CP
 SS=04 if MI
+
+make request (Dr)
+analyse request to find samples to be collected (Phlebo)
+collect sample (Phlebo)
+give id to sample (lab)
+enter result
+report
 
 */
 
