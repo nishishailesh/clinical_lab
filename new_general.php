@@ -197,6 +197,7 @@ function save_insert($link)
 	$ex_requested=explode(',',$_POST['list_of_selected_examination']);
 	$requested=array_merge($requested,$ex_requested);
 	$profile_requested=explode(',',$_POST['list_of_selected_profile']);
+
 	foreach($profile_requested as $value)
 	{
 		$psql='select * from profile where profile_id=\''.$value.'\'';
@@ -206,9 +207,8 @@ function save_insert($link)
 		$requested=array_merge($requested,$profile_ex_requested);
 	}
 
-	$requested=array_unique($requested);
-	print_r($requested);
-	
+	$requested=array_filter(array_unique($requested));
+	echo '<pre>You have requested following:<br>';print_r($requested);echo '</pre>';
 	//determine sample-type required
 	$sample_required=array();
 	foreach($requested as $ex)
@@ -220,7 +220,17 @@ function save_insert($link)
 	}
 	
 	$sample_required=array_unique($sample_required);
-	print_r($sample_required);
+	echo '<pre>following samples are required:<br>';print_r($sample_required);echo '</pre>';
+	
+	$sample_id_array=set_sample_id($sample_required);
+	echo '<pre>following samples ids are alloted:<br>';print_r($sample_id_array);echo '</pre>';
+}
+
+function set_sample_id($sample_required)
+{
+	$sample_id_array=array();
+	
+	return $sample_id_array;
 }
 
 /*Array
@@ -262,6 +272,18 @@ SS=02 if HI
 SS=03 if CP
 SS=04 if MI
 
+YYMMDDHHMMSRR
+1912050534001
+
+YY1234567
+199999999 , 9 digits
+
+  9999999	available=99 lacs, 7 digit
+  
+  1000000-1999999 Bio 1000000-1500000 (Ward) 16000001
+  2000000-2999999 HI
+  3000000-3999999 CP 
+   
 */
 
 
