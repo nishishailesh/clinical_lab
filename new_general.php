@@ -35,9 +35,9 @@ echo '<div class="basic_form">';
 			<input class="form-control text-danger" type=text required="required" pattern="[a-zA-Z]{2,}" id=name name=name placeholder=name>
 			<p class="help"><span class=text-danger>Must have</span> atleast two characters</p>';
 
-	echo '	<label  class="my_label" for="group_id">Group ID</label>
-			<input class="form-control" type=text id=group_id name=group_id placeholder=group_id>
-			<p class="help">Give ID to a group of samples from single patient</p>';
+	echo '	<label  class="my_label" for="group_id">Request ID</label>
+			<input class="form-control" type=text id=request_id name=request_id placeholder=request_id>
+			<p class="help">Give single Request ID to all today\'s samples from this patient</p>';
 echo '</div>';
 echo '</div>';	
 	
@@ -187,21 +187,17 @@ function insert_or_update_result($sample_id,$examination_id,$result,$uniq)
 
 function save_insert($link)
 {
-	//find list of examinations requested
-	//determine sample-type required
-	//find sample_id to be given
-	//insert all examinations in result table
-	
-	//find list of examinations requested
+			//find list of examinations requested
+			//determine sample-type required
+			//find sample_id to be given
+			//insert all examinations/non-examinations in result table
+			
+	//find list of examinations requested//////////////////////////////
 	$requested=array();
 	$ex_requested=explode(',',$_POST['list_of_selected_examination']);
-	echo '<h5>following individual tests are requested</h5>';
-	echo '<pre>';print_r($ex_requested);echo '</pre>';
 	$requested=array_merge($requested,$ex_requested);
-	echo '<h5>all request before profile</h5>';
-	echo '<pre>';print_r($requested);echo '</pre>';
 	$profile_requested=explode(',',$_POST['list_of_selected_profile']);
-	
+
 	foreach($profile_requested as $value)
 	{
 		$psql='select * from profile where profile_id=\''.$value.'\'';
@@ -211,28 +207,112 @@ function save_insert($link)
 		$requested=array_merge($requested,$profile_ex_requested);
 	}
 
-	$requested=array_unique($requested);
-	
-	echo '<h5>following tests are requested</h5>';
-	echo '<pre>';print_r($requested);echo '</pre>';
-	
-	//determine sample-type required
+	$requested=array_filter(array_unique($requested));
+			//echo '<pre>following is requested:<br>';print_r($requested);echo '</pre>';
+
+	//determine sample-type required for each and also distinct types////////////////////////////////////
 	$sample_required=array();
+	$stype_for_each_requested=array();
+	
 	foreach($requested as $ex)
 	{
 		$psql='select sample_requirement from examination where examination_id=\''.$ex.'\'';
 		$result=run_query($link,$GLOBALS['database'],$psql);
 		$ar=get_single_row($result);
 		$sample_required[]=$ar['sample_requirement'];
+		$stype_for_each_requested[$ex]=$ar['sample_requirement'];
 	}
 	
-	$sample_required=array_unique($sample_required);
+			//echo '<pre>following are sample_requirements for each:<br>';print_r($stype_for_each_requested);echo '</pre>';
 	
-	echo '<h5>following samples needs to be collected</h5>';
-	echo '<pre>';print_r($sample_required);echo '</pre>';
+	$sample_required=array_unique($sample_required);
+			//echo '<pre>following samples are required:<br>';print_r($sample_required);echo '</pre>';
+	
+			//determine sample_id to be given/////////////////////////////////
+	$sample_id_array=set_sample_id($link,$sample_required);
+			//echo '<pre>following samples ids are alloted:<br>';print_r($sample_id_array);echo '</pre>';
 
+	//insert examinations////////////////////////////////////////////
+	foreach ($stype_for_each_requested as $ex=>$stype)
+	{
+		insert_one_examination_without_result($link,$sample_id_array[$stype],$ex);
+	}
+	
+	//insert non-examinations///////////////////////////////////////
+	
+	$non_ex=array
+	(
+    'mrd' => '1001',
+    'name' => '1002',
+    'request_id' => '1003',
+    'department' => '1004',
+    'unit' => '1005',
+    'ow_no' => '1006',
+    'unique_id' => '1007',
+    'mobile' => '1008',
+    'sex' => '1009',
+    'dob' => '1010',
+    'age' => '1011',
+    'extra' => '1012'
+	);
+	
+	foreach ($sample_id_array as $sid)
+	{
+		foreach($non_ex as $p_name=>$ex_id)
+		{
+			echo $p_name.'-'.$_POST[$p_name].'-'.strlen($_POST[$p_name]).'<br>';
+			if(strlen($_POST[$p_name])>0)
+			{
+				insert_one_examination_with_result($link,$sid,$ex_id,$_POST[$p_name]);
+			}
+		}
+	}	
 }
 
+
+function insert_one_examination_without_result($link,$sample_id,$examination_id)
+{
+	$sql='insert into result (sample_id,examination_id)
+			values ("'.$sample_id.'","'.$examination_id.'")';
+	if(!run_query($link,$GLOBALS['database'],$sql))
+		{echo 'Data not inserted<br>'; return false;}
+	else{return true;}
+}
+
+function insert_one_examination_with_result($link,$sample_id,$examination_id,$result)
+{
+	$sql='insert into result (sample_id,examination_id,result)
+			values ("'.$sample_id.'","'.$examination_id.'","'.$result.'")';
+	//echo $sql.'<br>';
+	if(!run_query($link,$GLOBALS['database'],$sql))
+		{echo 'Data not inserted<br>'; return false;}
+	else{return true;}
+}
+
+function set_sample_id($link, $sample_required)
+{
+	$sample_id_array=array();
+	foreach ($sample_required as $stype)
+	{
+		$sample_id_array[$stype]=find_next_sample_id($link,$stype);
+	}
+	return $sample_id_array;
+}
+
+function find_next_sample_id($link,$sample_requirement)
+{
+	$sql='select * from sample_id_strategy where sample_requirement=\''.$sample_requirement.'\'';
+	$result=run_query($link,$GLOBALS['database'],$sql);
+	$ar=get_single_row($result);
+	$from=$ar['lowest_id'];
+	$to=$ar['highest_id'];	
+
+	$sqls='select ifnull(max(sample_id)+1,'.$from.') as next_sample_id from result where sample_id between '.$from.' and '.$to;
+	//echo $sqls;
+	$results=run_query($link,$GLOBALS['database'],$sqls);
+	$ars=get_single_row($results);
+	return $ars['next_sample_id'];
+}
 /*Array
 (
     [session_name] => sn_1611426731
@@ -272,13 +352,31 @@ SS=02 if HI
 SS=03 if CP
 SS=04 if MI
 
-make request (Dr)
+make request (Dr) - Request_ID
 analyse request to find samples to be collected (Phlebo)
 collect sample (Phlebo)
-give id to sample (lab)
+give id to sample (lab) - Sample_ID
 enter result
 report
 
+=======
+
+YY1234567
+199999999 , 9 digits (two digits for year)
+
+  9999999	available=99 lacs, 7 digit
+  
+  1000000-1999999 Bio 1000000-1500000 (Ward) 16000001
+  2000000-2999999 HI
+  3000000-3999999 CP 
+  4000000-4999999 HP 
+  5000000-5999999 CY
+  6000000-6999999 MI 
+  
+  10 lac per year
+  80000 per month 
+  2500 per day per section
+  
 */
 
 

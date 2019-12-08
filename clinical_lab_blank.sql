@@ -27,116 +27,26 @@ CREATE TABLE `examination` (
   `name` varchar(50) COLLATE utf8_bin NOT NULL,
   `sample_requirement` varchar(300) COLLATE utf8_bin NOT NULL,
   `description` varchar(300) COLLATE utf8_bin NOT NULL,
-  PRIMARY KEY (`examination_id`)
+  PRIMARY KEY (`examination_id`),
+  KEY `examination_ibfk_1` (`sample_requirement`),
+  CONSTRAINT `examination_ibfk_1` FOREIGN KEY (`sample_requirement`) REFERENCES `sample_requirement` (`sample_requirement`) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `examination_property_blob`
+-- Table structure for table `primary_result`
 --
 
-DROP TABLE IF EXISTS `examination_property_blob`;
+DROP TABLE IF EXISTS `primary_result`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `examination_property_blob` (
-  `id` int(11) NOT NULL,
-  `examination_id` int(11) NOT NULL,
-  `name` varchar(50) COLLATE utf8_bin NOT NULL,
-  `description` varchar(300) COLLATE utf8_bin NOT NULL,
-  `sequence` decimal(10,2) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `examination_id` (`examination_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `examination_property_decimal`
---
-
-DROP TABLE IF EXISTS `examination_property_decimal`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `examination_property_decimal` (
-  `id` int(11) NOT NULL,
-  `examination_id` int(11) NOT NULL,
-  `name` varchar(50) COLLATE utf8_bin NOT NULL,
-  `description` varchar(300) COLLATE utf8_bin NOT NULL,
-  `sequence` decimal(10,2) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `examination_id` (`examination_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `examination_property_text`
---
-
-DROP TABLE IF EXISTS `examination_property_text`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `examination_property_text` (
-  `id` int(11) NOT NULL,
-  `examination_id` int(11) NOT NULL,
-  `name` varchar(50) COLLATE utf8_bin NOT NULL,
-  `description` varchar(300) COLLATE utf8_bin NOT NULL,
-  `sequence` decimal(10,2) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `examination_id` (`examination_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `examination_result_blob`
---
-
-DROP TABLE IF EXISTS `examination_result_blob`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `examination_result_blob` (
+CREATE TABLE `primary_result` (
   `sample_id` bigint(20) NOT NULL,
-  `examination_property_id` int(11) NOT NULL,
-  `result` mediumblob NOT NULL,
-  PRIMARY KEY (`sample_id`,`examination_property_id`),
-  KEY `examination_property_id` (`examination_property_id`),
-  CONSTRAINT `examination_result_blob_ibfk_1` FOREIGN KEY (`sample_id`) REFERENCES `sample` (`id`),
-  CONSTRAINT `examination_result_blob_ibfk_2` FOREIGN KEY (`examination_property_id`) REFERENCES `examination_property_blob` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `examination_result_decimal`
---
-
-DROP TABLE IF EXISTS `examination_result_decimal`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `examination_result_decimal` (
-  `sample_id` bigint(20) NOT NULL,
-  `examination_property_id` int(11) NOT NULL,
-  `result` decimal(10,2) NOT NULL,
-  PRIMARY KEY (`sample_id`,`examination_property_id`),
-  KEY `examination_property_id` (`examination_property_id`),
-  CONSTRAINT `examination_result_decimal_ibfk_1` FOREIGN KEY (`sample_id`) REFERENCES `sample` (`id`),
-  CONSTRAINT `examination_result_decimal_ibfk_2` FOREIGN KEY (`examination_property_id`) REFERENCES `examination_property_decimal` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Table structure for table `examination_result_text`
---
-
-DROP TABLE IF EXISTS `examination_result_text`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `examination_result_text` (
-  `sample_id` bigint(20) NOT NULL,
-  `examination_property_id` int(11) NOT NULL,
-  `result` varchar(300) COLLATE utf8_bin NOT NULL,
-  PRIMARY KEY (`sample_id`,`examination_property_id`),
-  KEY `examination_property_id` (`examination_property_id`),
-  CONSTRAINT `examination_result_text_ibfk_1` FOREIGN KEY (`sample_id`) REFERENCES `sample` (`id`),
-  CONSTRAINT `examination_result_text_ibfk_2` FOREIGN KEY (`examination_property_id`) REFERENCES `examination_property_text` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+  `examination_id` int(11) NOT NULL,
+  `result` varchar(5000) DEFAULT NULL,
+  `uniq` varchar(100) NOT NULL,
+  PRIMARY KEY (`sample_id`,`examination_id`,`uniq`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -164,24 +74,39 @@ DROP TABLE IF EXISTS `result`;
 CREATE TABLE `result` (
   `sample_id` bigint(20) NOT NULL,
   `examination_id` int(11) NOT NULL,
-  `result` varchar(5000) NOT NULL,
-  `uniq` varchar(100) NOT NULL,
-  PRIMARY KEY (`sample_id`,`examination_id`,`uniq`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+  `result` varchar(5000) DEFAULT NULL,
+  PRIMARY KEY (`sample_id`,`examination_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Table structure for table `sample`
+-- Table structure for table `sample_id_strategy`
 --
 
-DROP TABLE IF EXISTS `sample`;
+DROP TABLE IF EXISTS `sample_id_strategy`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `sample` (
-  `id` bigint(20) NOT NULL,
-  `patient_id` varchar(50) COLLATE utf8_bin NOT NULL,
-  `description` varchar(300) COLLATE utf8_bin NOT NULL,
-  PRIMARY KEY (`id`)
+CREATE TABLE `sample_id_strategy` (
+  `sample_requirement` varchar(300) COLLATE utf8_bin NOT NULL,
+  `lowest_id` bigint(20) NOT NULL,
+  `highest_id` bigint(20) NOT NULL,
+  `description` varchar(500) COLLATE utf8_bin NOT NULL,
+  PRIMARY KEY (`sample_requirement`),
+  CONSTRAINT `sample_id_strategy_ibfk_1` FOREIGN KEY (`sample_requirement`) REFERENCES `sample_requirement` (`sample_requirement`) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `sample_requirement`
+--
+
+DROP TABLE IF EXISTS `sample_requirement`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `sample_requirement` (
+  `sample_requirement` varchar(300) COLLATE utf8_bin NOT NULL,
+  `description` varchar(500) COLLATE utf8_bin NOT NULL,
+  PRIMARY KEY (`sample_requirement`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -209,4 +134,4 @@ CREATE TABLE `user` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-12-07  0:22:38
+-- Dump completed on 2019-12-08 23:15:13
