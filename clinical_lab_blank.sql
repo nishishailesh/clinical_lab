@@ -75,7 +75,9 @@ CREATE TABLE `result` (
   `sample_id` bigint(20) NOT NULL,
   `examination_id` int(11) NOT NULL,
   `result` varchar(5000) DEFAULT NULL,
-  PRIMARY KEY (`sample_id`,`examination_id`)
+  PRIMARY KEY (`sample_id`,`examination_id`),
+  KEY `examination_id` (`examination_id`),
+  CONSTRAINT `result_ibfk_1` FOREIGN KEY (`examination_id`) REFERENCES `examination` (`examination_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -134,4 +136,4 @@ CREATE TABLE `user` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-12-08 23:15:13
+-- Dump completed on 2019-12-10  0:04:08

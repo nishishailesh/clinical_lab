@@ -208,7 +208,8 @@ function save_insert($link)
 	}
 
 	$requested=array_filter(array_unique($requested));
-			//echo '<pre>following is requested:<br>';print_r($requested);echo '</pre>';
+//1	
+	echo '<pre>following is requested:<br>';print_r($requested);echo '</pre>';
 
 	//determine sample-type required for each and also distinct types////////////////////////////////////
 	$sample_required=array();
@@ -222,24 +223,30 @@ function save_insert($link)
 		$sample_required[]=$ar['sample_requirement'];
 		$stype_for_each_requested[$ex]=$ar['sample_requirement'];
 	}
-	
-			//echo '<pre>following are sample_requirements for each:<br>';print_r($stype_for_each_requested);echo '</pre>';
+
+//2	
+	echo '<pre>following are sample_requirements for each:<br>';print_r($stype_for_each_requested);echo '</pre>';
 	
 	$sample_required=array_unique($sample_required);
-			//echo '<pre>following samples are required:<br>';print_r($sample_required);echo '</pre>';
+//3	
+	echo '<pre>following samples are required:<br>';print_r($sample_required);echo '</pre>';
 	
 			//determine sample_id to be given/////////////////////////////////
 	$sample_id_array=set_sample_id($link,$sample_required);
-			//echo '<pre>following samples ids are alloted:<br>';print_r($sample_id_array);echo '</pre>';
+//4	
+	echo '<pre>following samples ids are alloted:<br>';print_r($sample_id_array);echo '</pre>';
 
 	//insert examinations////////////////////////////////////////////
 	foreach ($stype_for_each_requested as $ex=>$stype)
 	{
-		insert_one_examination_without_result($link,$sample_id_array[$stype],$ex);
+		if($stype!='None')
+		{
+			insert_one_examination_without_result($link,$sample_id_array[$stype],$ex);
+		}
 	}
 	
 	//insert non-examinations///////////////////////////////////////
-	
+	//Manage all examinations where sample_requirement is None or Cal
 	$non_ex=array
 	(
     'mrd' => '1001',
@@ -260,7 +267,7 @@ function save_insert($link)
 	{
 		foreach($non_ex as $p_name=>$ex_id)
 		{
-			echo $p_name.'-'.$_POST[$p_name].'-'.strlen($_POST[$p_name]).'<br>';
+			//echo $p_name.'-'.$_POST[$p_name].'-'.strlen($_POST[$p_name]).'<br>';
 			if(strlen($_POST[$p_name])>0)
 			{
 				insert_one_examination_with_result($link,$sid,$ex_id,$_POST[$p_name]);
@@ -274,8 +281,9 @@ function insert_one_examination_without_result($link,$sample_id,$examination_id)
 {
 	$sql='insert into result (sample_id,examination_id)
 			values ("'.$sample_id.'","'.$examination_id.'")';
+	echo $sql.'(without)<br>';
 	if(!run_query($link,$GLOBALS['database'],$sql))
-		{echo 'Data not inserted<br>'; return false;}
+		{echo 'Data not inserted(without)<br>'; return false;}
 	else{return true;}
 }
 
@@ -283,18 +291,26 @@ function insert_one_examination_with_result($link,$sample_id,$examination_id,$re
 {
 	$sql='insert into result (sample_id,examination_id,result)
 			values ("'.$sample_id.'","'.$examination_id.'","'.$result.'")';
-	//echo $sql.'<br>';
+	echo $sql.'(with)<br>';
 	if(!run_query($link,$GLOBALS['database'],$sql))
-		{echo 'Data not inserted<br>'; return false;}
+		{echo 'Data not inserted(with)<br>'; return false;}
 	else{return true;}
 }
 
-function set_sample_id($link, $sample_required)
+function set_sample_id($link, $sample_required_array)
 {
 	$sample_id_array=array();
-	foreach ($sample_required as $stype)
+	foreach ($sample_required_array as $stype)
 	{
-		$sample_id_array[$stype]=find_next_sample_id($link,$stype);
+		if($stype!='None')
+		{
+			$sample_id_array[$stype]=find_next_sample_id($link,$stype);
+			//we must REALLY insert something in result to make increment possible in next cycle
+			//otherwise sample id for given stype will be returned
+			//so insert sample_requirement as first result!!!
+			//1000 is sample_requirement
+			insert_one_examination_with_result($link,$sample_id_array[$stype],'1000',$stype);
+		}
 	}
 	return $sample_id_array;
 }
