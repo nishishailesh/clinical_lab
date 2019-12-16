@@ -12,11 +12,7 @@ if($_POST['action']=='new_general')
 }
 elseif($_POST['action']=='insert')
 {
-	$sample_id_array=save_insert($link);
-	foreach ($sample_id_array as $value)
-	{
-		view_sample($link,$value);
-	}
+	save_insert($link);
 }
 	//////////////user code ends////////////////
 tail();
@@ -112,9 +108,6 @@ function get_data($link)
 			<li><button class="btn btn-secondary" type=button  data-toggle="tab" href="#more_basic">More</button></li>
 			<li><button class="btn btn-secondary" type=button  data-toggle="tab" href="#examination">Examinations</button></li>
 			<li><button class="btn btn-secondary" type=button  data-toggle="tab" href="#profile">Profiles</button></li>
-			<!-- 
-			<li><button class="btn btn-secondary" type=button  data-toggle="tab" href="#examination_blob">Extra</button></li>
-			-->
 			<li><button type=submit class="btn btn-primary form-control" name=action value=insert>Save</button></li>
 		</ul>';
 	echo '<div class="tab-content">';
@@ -122,7 +115,6 @@ function get_data($link)
 		get_more_basic();
 		get_examination_data($link);
 		get_profile_data($link);
-		//get_examination_blob_data($link);
 	echo '</div>';
 	
 	//echo '<div class="basic_form">';
@@ -139,11 +131,13 @@ function get_examination_data($link)
 	$sql='select * from examination where sample_requirement!=\'None\'';
 	$result=run_query($link,$GLOBALS['database'],$sql);
 	echo '<div id=examination class="tab-pane ">';
+	echo '<div class="ex_profile">';
 	while($ar=get_single_row($result))
 	{
 		my_on_off_ex($ar['name'],$ar['sample_requirement'],$ar['examination_id']);
 	}
-	echo '<input type=text name=list_of_selected_examination id=list_of_selected_examination>';
+	echo '<input type=hidden name=list_of_selected_examination id=list_of_selected_examination>';
+	echo '</div>';
 	echo '</div>';
 }
 
@@ -156,20 +150,7 @@ function get_profile_data($link)
 	{
 		my_on_off_profile($ar['name'],$ar['profile_id']);
 	}
-	echo '<input type=text name=list_of_selected_profile id=list_of_selected_profile>';
-	echo '</div>';
-}
-
-function get_examination_blob_data($link)
-{
-	$sql='select * from examination_blob where sample_requirement!=\'None\'';
-	$result=run_query($link,$GLOBALS['database'],$sql);
-	echo '<div id="examination_blob" class="tab-pane ">';
-	while($ar=get_single_row($result))
-	{
-		my_on_off_ex_blob($ar['name'],$ar['sample_requirement'],$ar['examination_id']);
-	}
-	echo '<input type=text name=list_of_selected_examination_blob id=list_of_selected_examination_blob>';
+	echo '<input type=hidden name=list_of_selected_profile id=list_of_selected_profile>';
 	echo '</div>';
 }
 
@@ -182,15 +163,8 @@ function my_on_off_ex($label,$sr,$id)
 			onclick="select_examination_js(this, \''.$id.'\',\'list_of_selected_examination\')"
 			>'.$label.'<br>('.$sr.')</button>';
 }
-function my_on_off_ex_blob($label,$sr,$id)
-{
-	
-	echo '<button 
-			class="btn btn-sm btn-outline-primary"
-			type=button 
-			onclick="select_examination_blob_js(this, \''.$id.'\',\'list_of_selected_examination_blob\')"
-			>'.$label.'<br>('.$sr.')</button>';
-}
+
+
 function my_on_off_profile($label,$id)
 {
 	
@@ -221,11 +195,9 @@ function save_insert($link)
 	//find list of examinations requested//////////////////////////////
 	$requested=array();
 	$ex_requested=explode(',',$_POST['list_of_selected_examination']);
-	//$ex_blob_requested=explode(',',$_POST['list_of_selected_examination_blob']);
 	$requested=array_merge($requested,$ex_requested);
-	//$requested=array_merge($requested,$ex_blob_requested);
-	
 	$profile_requested=explode(',',$_POST['list_of_selected_profile']);
+
 	foreach($profile_requested as $value)
 	{
 		$psql='select * from profile where profile_id=\''.$value.'\'';
@@ -237,7 +209,7 @@ function save_insert($link)
 
 	$requested=array_filter(array_unique($requested));
 //1	
-//	echo '<pre>following is requested:<br>';print_r($requested);echo '</pre>';
+	echo '<pre>following is requested:<br>';print_r($requested);echo '</pre>';
 
 	//determine sample-type required for each and also distinct types////////////////////////////////////
 	$sample_required=array();
@@ -253,34 +225,27 @@ function save_insert($link)
 	}
 
 //2	
-//	echo '<pre>following are sample_requirements for each:<br>';print_r($stype_for_each_requested);echo '</pre>';
+	echo '<pre>following are sample_requirements for each:<br>';print_r($stype_for_each_requested);echo '</pre>';
 	
 	$sample_required=array_unique($sample_required);
 //3	
-//	echo '<pre>following samples are required:<br>';print_r($sample_required);echo '</pre>';
+	echo '<pre>following samples are required:<br>';print_r($sample_required);echo '</pre>';
 	
 			//determine sample_id to be given/////////////////////////////////
 	$sample_id_array=set_sample_id($link,$sample_required);
 //4	
-//	echo '<pre>following samples ids are alloted:<br>';print_r($sample_id_array);echo '</pre>';
+	echo '<pre>following samples ids are alloted:<br>';print_r($sample_id_array);echo '</pre>';
 
-//insert examinations////////////////////////////////////////////
+	//insert examinations////////////////////////////////////////////
 	foreach ($stype_for_each_requested as $ex=>$stype)
 	{
 		if($stype!='None')
 		{
-			if($ex<10000)
-			{
-				insert_one_examination_without_result($link,$sample_id_array[$stype],$ex);
-			}
-			else  //blob as attachment 
-			{
-				insert_one_examination_blob_without_result($link,$sample_id_array[$stype],$ex);
-			}
+			insert_one_examination_without_result($link,$sample_id_array[$stype],$ex);
 		}
 	}
 	
-//insert non-examinations///////////////////////////////////////
+	//insert non-examinations///////////////////////////////////////
 	//Manage all examinations where sample_requirement is None or Cal
 	$non_ex=array
 	(
@@ -308,36 +273,25 @@ function save_insert($link)
 				insert_one_examination_with_result($link,$sid,$ex_id,$_POST[$p_name]);
 			}
 		}
-	}
-	return $sample_id_array	;
+	}	
 }
+
 
 function insert_one_examination_without_result($link,$sample_id,$examination_id)
 {
 	$sql='insert into result (sample_id,examination_id)
 			values ("'.$sample_id.'","'.$examination_id.'")';
-	//echo $sql.'(without)<br>';
+	echo $sql.'(without)<br>';
 	if(!run_query($link,$GLOBALS['database'],$sql))
 		{echo 'Data not inserted(without)<br>'; return false;}
 	else{return true;}
 }
-
-function insert_one_examination_blob_without_result($link,$sample_id,$examination_id)
-{
-	$sql='insert into result_blob (sample_id,examination_id)
-			values ("'.$sample_id.'","'.$examination_id.'")';
-	//echo $sql.'(without)<br>';
-	if(!run_query($link,$GLOBALS['database'],$sql))
-		{echo 'Data not inserted(without)<br>'; return false;}
-	else{return true;}
-}
-
 
 function insert_one_examination_with_result($link,$sample_id,$examination_id,$result)
 {
 	$sql='insert into result (sample_id,examination_id,result)
 			values ("'.$sample_id.'","'.$examination_id.'","'.$result.'")';
-	//echo $sql.'(with)<br>';
+	echo $sql.'(with)<br>';
 	if(!run_query($link,$GLOBALS['database'],$sql))
 		{echo 'Data not inserted(with)<br>'; return false;}
 	else{return true;}
@@ -375,6 +329,72 @@ function find_next_sample_id($link,$sample_requirement)
 	$ars=get_single_row($results);
 	return $ars['next_sample_id'];
 }
+/*Array
+(
+    [session_name] => sn_1611426731
+    [mrd] => SUR/19/12345678
+    [name] => shailesh
+    [group_id] => 1212
+    [department] => 
+    [unit] => 
+    [ow_no] => 
+    [unique_id] => 
+    [mobile] => 
+    [sex] => 
+    [dob] => 
+    [age] => 
+    [extra] => 
+    [list_of_selected_examination] => 
+    [list_of_selected_profile] => 3
+    [action] => insert
+)
+
+give sample_id as autonumber
+sample_id have its attached parameters
+	*date
+	*time
+	*patient department unit location
+	*serial number catagory
+	*serial number
+	 
+YYMMXXSSNNNNN
+2012
+
+XX=01 if OPD
+XX=02 if Ward
+
+SS=01 if Bio
+SS=02 if HI
+SS=03 if CP
+SS=04 if MI
+
+make request (Dr) - Request_ID
+analyse request to find samples to be collected (Phlebo)
+collect sample (Phlebo)
+give id to sample (lab) - Sample_ID
+enter result
+report
+
+=======
+
+YY1234567
+199999999 , 9 digits (two digits for year)
+
+  9999999	available=99 lacs, 7 digit
+  
+  1000000-1999999 Bio 1000000-1500000 (Ward) 16000001
+  2000000-2999999 HI
+  3000000-3999999 CP 
+  4000000-4999999 HP 
+  5000000-5999999 CY
+  6000000-6999999 MI 
+  
+  10 lac per year
+  80000 per month 
+  2500 per day per section
+  
+*/
+
 
 ?>
 <style>
@@ -446,7 +466,6 @@ function find_next_sample_id($link,$sample_requirement)
 <script>
 var selected_ex=[]
 var selected_profile=[]
-var selected_ex_blob=[]
 
 function select_examination_js(me,ex_id,list_id)
 {
@@ -478,21 +497,5 @@ function select_profile_js(me,ex_id,list_id)
 		document.getElementById(list_id).value=selected_profile
 		me.classList.add('bg-warning')
 	}
-}	
-
-function select_examination_blob_js(me,ex_id,list_id)
-{
-	if(selected_ex_blob.indexOf(ex_id) !== -1)
-	{
-		selected_ex_blob.splice(selected_ex_blob.indexOf(ex_id),1)
-		document.getElementById(list_id).value=selected_ex_blob
-		me.classList.remove('bg-warning')
-	}
-	else
-	{
-		selected_ex_blob.push(ex_id);
-		document.getElementById(list_id).value=selected_ex_blob
-		me.classList.add('bg-warning')
-	}
-}					
+}						
 </script>

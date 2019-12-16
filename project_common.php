@@ -41,4 +41,32 @@ function mk_select_from_array($name, $select_array,$disabled='',$default='')
 }
 
 
+function get_one_examination_details($link,$examination_id)
+{
+	$sql='select * from examination where examination_id=\''.$examination_id.'\'';
+	$result=run_query($link,$GLOBALS['database'],$sql);
+	
+	return $ar=get_single_row($result);
+}
+
+function view_sample($link,$sample_id)
+{
+	$sql='select * from result where sample_id=\''.$sample_id.'\'';
+	$result=run_query($link,$GLOBALS['database'],$sql);
+	
+	echo '<table class="table table-striped table-bordered">';
+	echo '<tr><td>Sample ID</td><td colspan=2>'.$sample_id.'</td></tr>';
+	echo '<tr><th>Examination ID</th><th>Name</th><th>Result</th></tr>';
+	while($ar=get_single_row($result))
+	{
+		//print_r($ar);
+		$examination_details=get_one_examination_details($link,$ar['examination_id']);
+		//print_r($examination_details);
+		echo '	<tr><td>'.$examination_details['examination_id'].'</td>
+				<td>'.$examination_details['name'].'</td>
+				<td>'.$ar['result'].'</td></tr>';
+	}
+	echo '</table>';
+}
+
 ?>

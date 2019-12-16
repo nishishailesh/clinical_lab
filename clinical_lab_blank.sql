@@ -43,8 +43,8 @@ DROP TABLE IF EXISTS `primary_result`;
 CREATE TABLE `primary_result` (
   `sample_id` bigint(20) NOT NULL,
   `examination_id` int(11) NOT NULL,
-  `result` varchar(5000) DEFAULT NULL,
   `uniq` varchar(100) NOT NULL,
+  `result` varchar(5000) DEFAULT NULL,
   PRIMARY KEY (`sample_id`,`examination_id`,`uniq`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -78,6 +78,23 @@ CREATE TABLE `result` (
   PRIMARY KEY (`sample_id`,`examination_id`),
   KEY `examination_id` (`examination_id`),
   CONSTRAINT `result_ibfk_1` FOREIGN KEY (`examination_id`) REFERENCES `examination` (`examination_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Table structure for table `result_blob`
+--
+
+DROP TABLE IF EXISTS `result_blob`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `result_blob` (
+  `sample_id` bigint(20) NOT NULL,
+  `examination_id` int(11) NOT NULL,
+  `result` mediumblob DEFAULT NULL,
+  PRIMARY KEY (`sample_id`,`examination_id`),
+  KEY `examination_id` (`examination_id`),
+  CONSTRAINT `result_blob_ibfk_1` FOREIGN KEY (`examination_id`) REFERENCES `examination` (`examination_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -136,4 +153,4 @@ CREATE TABLE `user` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-12-10  0:04:08
+-- Dump completed on 2019-12-16  9:43:17
