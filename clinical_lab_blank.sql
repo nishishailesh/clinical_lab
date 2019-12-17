@@ -92,6 +92,7 @@ CREATE TABLE `result_blob` (
   `sample_id` bigint(20) NOT NULL,
   `examination_id` int(11) NOT NULL,
   `result` mediumblob DEFAULT NULL,
+  `fname` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`sample_id`,`examination_id`),
   KEY `examination_id` (`examination_id`),
   CONSTRAINT `result_blob_ibfk_1` FOREIGN KEY (`examination_id`) REFERENCES `examination` (`examination_id`)
@@ -153,4 +154,4 @@ CREATE TABLE `user` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2019-12-16  9:43:17
+-- Dump completed on 2019-12-17  9:42:38

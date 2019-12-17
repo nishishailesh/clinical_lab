@@ -18,7 +18,8 @@ elseif($_POST['action']=='insert')
 		view_sample($link,$value);
 	}
 }
-	//////////////user code ends////////////////
+
+//////////////user code ends////////////////
 tail();
 
 //echo '<pre>';print_r($_POST);echo '</pre>';
@@ -36,7 +37,7 @@ echo '<div class="basic_form">';
 			<p class="help"><span class=text-danger>Must have</span> 8 digit after SUR/YY/</p>';
 			
 	echo '	<label  class="my_label text-danger" for="name">Name</label>
-			<input class="form-control text-danger" type=text required="required" pattern="[a-zA-Z]{2,}" id=name name=name placeholder=name>
+			<input class="form-control text-danger" type=text required="required" pattern="[a-zA-Z\s]{2,}" id=name name=name placeholder=name>
 			<p class="help"><span class=text-danger>Must have</span> atleast two characters</p>';
 
 	echo '	<label  class="my_label" for="group_id">Request ID</label>
@@ -44,8 +45,7 @@ echo '<div class="basic_form">';
 			<p class="help">Give single Request ID to all today\'s samples from this patient</p>';
 echo '</div>';
 echo '</div>';	
-	
-	
+
 }
 
 function get_more_basic()

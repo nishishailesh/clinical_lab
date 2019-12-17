@@ -55,7 +55,11 @@ function view_sample($link,$sample_id)
 	$result=run_query($link,$GLOBALS['database'],$sql);
 	
 	echo '<table class="table table-striped table-bordered">';
-	echo '<tr><td>Sample ID</td><td colspan=2>'.$sample_id.'</td></tr>';
+	echo '<tr>
+			<td>Sample ID</td>
+			<td colspan=2>';
+			sample_id_edit_button($sample_id);
+			echo '</td></tr>';
 	echo '<tr><th>Examination ID</th><th>Name</th><th>Result</th></tr>';
 	while($ar=get_single_row($result))
 	{
@@ -66,7 +70,57 @@ function view_sample($link,$sample_id)
 				<td>'.$examination_details['name'].'</td>
 				<td>'.$ar['result'].'</td></tr>';
 	}
+	
+	$sql_blob='select * from result_blob where sample_id=\''.$sample_id.'\'';
+	$result_blob=run_query($link,$GLOBALS['database'],$sql_blob);
+	while($ar_blob=get_single_row($result_blob))
+	{
+		//print_r($ar);
+		$examination_blob_details=get_one_examination_details($link,$ar_blob['examination_id']);
+		//print_r($examination_details);
+		echo '	<tr><td>'.$examination_blob_details['examination_id'].'</td>
+				<td>'.$examination_blob_details['name'].'</td>
+				<td>';
+				echo_download_button_two_pk('result_blob','result',
+									'sample_id',$sample_id,
+									'examination_id',$examination_blob_details['examination_id'],
+									$sample_id.'-'.$examination_blob_details['examination_id'].'-'.$ar_blob['fname'],
+									round(strlen($ar_blob['result'])/1024,0));
+				echo '</td></tr>';
+	}	
+		
 	echo '</table>';
 }
+
+function sample_id_edit_button($sample_id)
+{
+	echo '<form method=post action=edit_general.php>
+	<button class="btn btn-success" name=sample_id value=\''.$sample_id.'\' >'.$sample_id.'</button>
+	<input type=hidden name=session_name value=\''.$_POST['session_name'].'\'>
+	<input type=hidden name=action value=edit_general>
+	</form>';
+}
+
+
+function echo_download_button_two_pk($table,$field,$primary_key,$primary_key_value,$primary_key2,$primary_key_value2,$postfix='',$fsize)
+{
+	echo '<form method=post action=download2.php>
+			<input type=hidden name=table value=\''.$table.'\'>
+			<input type=hidden name=field value=\''.$field.'\' >
+			<input type=hidden name=primary_key value=\''.$primary_key.'\'>
+			<input type=hidden name=primary_key2 value=\''.$primary_key2.'\'>
+			<input type=hidden name=fname_postfix value=\''.$postfix.'\'>
+			<input type=hidden name=primary_key_value value=\''.$primary_key_value.'\'>
+			<input type=hidden name=primary_key_value2 value=\''.$primary_key_value2.'\'>
+			<input type=hidden name=session_name value=\''.$_POST['session_name'].'\'>
+			
+			<button class="btn btn-info btn-block"  
+			formtarget=_blank
+			type=submit
+			name=action
+			value=download>Download('.$fsize.' kb)</button>
+		</form>';
+}
+
 
 ?>
